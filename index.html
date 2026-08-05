@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KERNEL://EXPLORER — Linux 内核三维学习器</title>
+<meta name="description" content="以三维交互方式学习 Linux 系统架构：内核态/用户态、目录树、进程与内存原理">
+<link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+
+<!-- ===== 顶部 HUD ===== -->
+<header class="hud" id="hud">
+  <div class="hud-left">
+    <div class="brand">
+      <span class="brand-mark">K://</span>
+      <span class="brand-name">EXPLORER</span>
+    </div>
+    <div class="brand-sub">linux&nbsp;kernel&nbsp;·&nbsp;interactive&nbsp;map</div>
+  </div>
+
+  <nav class="views" id="views" role="tablist">
+    <button class="view-btn active" data-view="panorama" role="tab">全景</button>
+    <button class="view-btn" data-view="kernel" role="tab">内核态</button>
+    <button class="view-btn" data-view="fs" role="tab">目录树</button>
+    <button class="view-btn" data-view="process" role="tab">进程</button>
+    <button class="view-btn" data-view="memory" role="tab">内存</button>
+    <button class="view-btn" data-view="user" role="tab">用户</button>
+  </nav>
+
+  <div class="hud-right">
+    <button class="icon-btn" id="btn-help" title="操作帮助">?</button>
+    <button class="icon-btn" id="btn-reset" title="重置视角">⟲</button>
+  </div>
+</header>
+
+<!-- ===== 3D 场景 ===== -->
+<main id="stage">
+  <div id="scene-container"></div>
+  <div id="scene-css-layer"></div>
+
+  <!-- 底部状态栏 -->
+  <footer class="statusbar" id="statusbar">
+    <span class="st st-view">视图: <b id="st-view">全景</b></span>
+    <span class="st st-sep">·</span>
+    <span class="st st-sel">选中: <b id="st-sel">—</b></span>
+    <span class="st st-sep">·</span>
+    <span class="st st-hint">左键拖动平移 · 中键拖动旋转 · 滚轮缩放 · 点击查看 · 右键更多</span>
+  </footer>
+</main>
+
+<!-- ===== 信息面板 ===== -->
+<aside class="panel" id="panel" aria-hidden="true">
+  <div class="panel-head">
+    <div class="panel-crumb" id="panel-crumb"></div>
+    <button class="panel-close" id="panel-close" title="关闭 (Esc)">×</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</aside>
+
+<!-- ===== 右键菜单 ===== -->
+<div class="ctxmenu" id="ctxmenu" hidden>
+  <div class="ctx-item" data-action="source">查看源码</div>
+  <div class="ctx-item" data-action="idea">设计思路</div>
+  <div class="ctx-item ctx-sep"></div>
+  <div class="ctx-item" data-action="focus">聚焦此对象</div>
+  <div class="ctx-item" data-action="reset">返回全景</div>
+</div>
+
+<!-- ===== 首次引导 ===== -->
+<div class="onboard" id="onboard">
+  <div class="onboard-box">
+    <button class="onboard-x" id="onboard-x" title="关闭 (Esc)">×</button>
+    <div class="onboard-title">KERNEL://EXPLORER</div>
+    <div class="onboard-line">左键拖动 — 移动视角位置（平移）</div>
+    <div class="onboard-line">中键拖动 — 旋转视角</div>
+    <div class="onboard-line">滚轮 — 缩放，钻入细节</div>
+    <div class="onboard-line">点击对象 — 查看功能与原理</div>
+    <div class="onboard-line">右键对象 — 源码与设计思路</div>
+    <button class="onboard-btn" id="onboard-enter">进入系统 →</button>
+  </div>
+</div>
+
+<!-- ===== WebGL 不可用时的降级提示 ===== -->
+<div class="nogl" id="nogl" hidden>
+  <div class="nogl-box">
+    <div class="onboard-title">无法启动 3D 场景</div>
+    <div class="nogl-text">当前浏览器没有可用的 WebGL（图形加速被禁用或硬件不支持）。</div>
+    <div class="nogl-text">请尝试：</div>
+    <div class="nogl-line">· Chrome / Edge：设置 → 系统 → 使用硬件加速</div>
+    <div class="nogl-line">· Safari：开发菜单 → 实验性功能 → WebGL 2.0</div>
+    <div class="nogl-line">· 或换一台带 GPU 的电脑 / 更新显卡驱动</div>
+    <div class="nogl-text" style="margin-top:12px;color:var(--ink-faint);">学习内容（源码与讲解）仍可浏览：<a id="nogl-link" href="#" style="color:var(--amber);">点击这里查看文字版目录 →</a></div>
+  </div>
+</div>
+
+<!-- ===== 文字版目录（降级浏览 / 快速跳转） ===== -->
+<div class="nodelist" id="nodelist" hidden>
+  <div class="nodelist-window">
+    <div class="nodelist-head">
+      <span class="nodelist-title">NODE INDEX · 全部节点</span>
+      <button class="icon-btn" id="nodelist-close" title="关闭 (Esc)">×</button>
+    </div>
+    <div class="nodelist-body" id="nodelist-body"></div>
+  </div>
+</div>
+
+<!-- ===== 源码视图遮罩层 ===== -->
+<div class="source-overlay" id="source-overlay" hidden>
+  <div class="source-window">
+    <div class="source-head">
+      <span class="source-file" id="source-file"></span>
+      <span class="source-spacer"></span>
+      <button class="icon-btn" id="source-close">×</button>
+    </div>
+    <pre class="source-code" id="source-code"></pre>
+  </div>
+</div>
+
+<script src="js/three.min.js?v=2"></script>
+<script src="js/OrbitControls.js?v=2"></script>
+<script src="js/CSS2DRenderer.js?v=2"></script>
+<script src="js/CSS3DRenderer.js?v=2"></script>
+<script src="js/data.js?v=2"></script>
+<script src="js/data2.js?v=2"></script>
+<script src="js/data3.js?v=2"></script>
+<script src="js/ui.js?v=2"></script>
+<script>
+/* 渲染模式自动选择：有 WebGL → 3D 光影版；无 WebGL → CSS3D 卡片版（无需 GPU） */
+(function () {
+  var ok = false;
+  try {
+    var a = document.createElement('canvas');
+    var b = document.createElement('canvas');
+    ok = !!(window.WebGLRenderingContext &&
+      (a.getContext('webgl2') || b.getContext('webgl') || b.getContext('experimental-webgl')));
+  } catch (e) { ok = false; }
+  var s = document.createElement('script');
+  s.src = ok ? 'js/main.js?v=2' : 'js/main-css3d.js?v=2';
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
