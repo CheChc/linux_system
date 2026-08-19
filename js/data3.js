@@ -272,3 +272,181 @@ window.KDATA.nodes['k-init'].path =
 
 window.KDATA.nodes['proc-exec'].path =
   ['proc-model', 'proc-exec', 'k-libc'];
+
+
+/* ==========================================================================
+   整机层（新增）：一台计算机的 6 个部件，点击钻取对应子系统
+   ========================================================================== */
+
+N['m-psu'] = {
+  id: 'm-psu', type: 'hw', name: '电源', en: 'Power Supply Unit',
+  kind: '部件',
+  zh: '一切从按下电源键开始：上电、自检、引导、内核初始化——这是理解 Linux 启动全过程的起点。',
+  desc: `
+    <p>学习整台计算机的最佳路径是<b>跟着电源走一遍启动流程</b>：</p>
+    <ol>
+      <li><b>上电</b>：电源稳定后，CPU 从复位向量取第一条指令（BIOS/UEFI）。</li>
+      <li><b>引导</b>：固件初始化硬件，加载引导器（GRUB），把内核镜像读入内存。</li>
+      <li><b>start_kernel</b>：内核入口，逐项初始化——调度器、内存、VFS、进程 1。</li>
+      <li><b>用户态接管</b>：init 进程启动服务，登录界面出现。</li>
+    </ol>
+    <p>点击「深入探索」沿着这条线走下去，就能把整台机器的运作顺序串起来。</p>`,
+  source: {
+    file: 'init/main.c',
+    note: '内核入口 start_kernel——Linux 一切初始化的起点。',
+    code: `/* init/main.c —— start_kernel 是内核的 main() */
+asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
+{
+	set_task_stack_end_magic(&init_task);
+	smp_setup_processor_id();
+	debug_objects_early_init();
+
+	cgroup_init_early();
+	local_irq_disable();
+	early_boot_irqs_disabled = true;
+
+	boot_cpu_init();
+	page_address_init();
+	pr_notice("%s", linux_banner);
+	setup_arch(&command_line);
+	...
+	/* 依次初始化各子系统 */
+	sched_init();
+	...
+	mm_init();
+	...
+	vfs_caches_init();
+	...
+	rest_init();   /* 创建 init 进程，进入用户态 */
+}`
+  },
+  related: ['k-init', 'k-sched', 'k-mm', 'proc-model'],
+  idea: `<p>计算机的"启动"是硬件与软件的分工仪式：硬件只负责把第一条指令交给 CPU，剩下的一切（驱动、内存、进程）都由内核逐步自举完成。</p>`,
+  drill: { view: 'kernel', focus: 'k-init', label: '启动流程' }
+};
+
+N['m-cpu'] = {
+  id: 'm-cpu', type: 'hw', name: 'CPU', en: 'Processor · 内核的家',
+  kind: '部件',
+  zh: '计算机的大脑，也是 Linux 内核的"驻地"：特权级、MMU、调度器都在这里。',
+  desc: `
+    <p>CPU 执行指令，但更关键的是它<b>强制划分了内核态与用户态</b>（ring 0 / ring 3）。内核就运行在 CPU 的内核态里。</p>
+    <p>点击「深入探索」进入内核态，从<b>调度器</b>开始认识 CPU 内部最核心的子系统。</p>`,
+  source: {
+    file: 'arch/x86/include/asm/processor-flags.h',
+    note: '控制寄存器定义——特权级与分页的硬件基础。',
+    code: `/* arch/x86/include/asm/processor-flags.h */
+#define X86_CR0_PE	(1UL << 0)	/* Protection Enable */
+#define X86_CR0_PG	(1UL << 31)	/* Paging */
+#define X86_CR4_SMEP	(1UL << 20)	/* Supervisor Mode Execution Protection */`
+  },
+  related: ['hw-cpu', 'k-sched', 'k-mm', 'k-vfs', 'k-net'],
+  idea: `<p>把内核想象成"住在 CPU 里的管家"：所有特权操作必须由它代办，普通程序只能敲门（系统调用）。</p>`,
+  drill: { view: 'kernel', focus: 'k-sched', label: '内核态' }
+};
+
+N['m-ram'] = {
+  id: 'm-ram', type: 'hw', name: '内存条', en: 'RAM · 虚拟内存的真身',
+  kind: '部件',
+  zh: '物理内存以 4KB 页框组织，是虚拟内存、页表、缺页、swap 的"物质基础"。',
+  desc: `
+    <p>内存条是 DRAM 芯片，内核把它的容量切成<b>页框</b>（4KB），再通过<b>页表</b>把每个进程的虚拟地址映射到这些页框上。</p>
+    <p>点击「深入探索」进入内存管理：虚拟内存 → 页表 → 缺页 → 伙伴/slab 分配器。</p>`,
+  source: {
+    file: 'mm/memory.c',
+    note: '缺页异常处理入口 handle_mm_fault——虚拟内存的核心机制。',
+    code: `/* mm/memory.c */
+vm_fault_t handle_mm_fault(struct vm_area_struct *vma, unsigned long address,
+			   unsigned int flags, struct pt_regs *regs)
+{
+	vm_fault_t ret;
+	...
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		if (address < vma->vm_start || address >= vma->vm_end)
+			goto out;
+	...
+	return ret;
+}`
+  },
+  related: ['mem-vm', 'mem-pte', 'mem-fault', 'mem-alloc'],
+  idea: `<p>虚拟内存是操作系统的"魔术"：每个进程都以为自己独占 4GB/128GB 地址空间，背后是页表在偷偷映射。</p>`,
+  drill: { view: 'memory', focus: 'mem-vm', label: '内存管理' }
+};
+
+N['m-disk'] = {
+  id: 'm-disk', type: 'hw', name: '硬盘', en: 'Storage · 数据的归宿',
+  kind: '部件',
+  zh: '持久化存储：目录树、VFS、ext4、页缓存、块设备层——文件系统的整条链路。',
+  desc: `
+    <p>硬盘保存"关机也不丢"的数据。内核通过 <b>VFS</b> 统一各种文件系统，ext4 负责磁盘布局，<b>页缓存</b>加速读写，<b>块设备层</b>最终下发 IO。</p>
+    <p>点击「深入探索」进入目录树与文件系统视图。</p>`,
+  source: {
+    file: 'fs/namei.c',
+    note: '路径解析——VFS 把 "a/b/c" 逐级翻译成 dentry/inode。',
+    code: `/* fs/namei.c —— path 解析的核心 */
+static int link_path_walk(const char *name, struct nameidata *nd)
+{
+	...
+	while (*name == '/')
+		name++;
+	if (!*name)
+		return 0;
+	...
+	nd->last_type = LAST_NORM;
+	...
+	return walk_component(nd, LOOKUP_FOLLOW);
+}`
+  },
+  related: ['fs-root', 'k-vfs', 'k-ext4', 'k-block'],
+  idea: `<p>文件系统是"字节的图书馆"：VFS 是图书管理员，ext4 是书架编号，页缓存是热门书的前台。</p>`,
+  drill: { view: 'fs', focus: 'fs-root', label: '文件系统' }
+};
+
+N['m-screen'] = {
+  id: 'm-screen', type: 'user', name: '屏幕', en: 'Display · 用户态之窗',
+  kind: '部件',
+  zh: '你看到的界面背后是用户态程序：libc 封装、系统调用、进程模型。',
+  desc: `
+    <p>屏幕上的每个程序都是<b>用户态进程</b>：它们通过 libc → 系统调用 → 内核的路径请求服务。</p>
+    <p>点击「深入探索」进入用户态：libc、系统调用链路、进程的生命周期。</p>`,
+  source: {
+    file: 'arch/x86/entry/entry_64.S',
+    note: 'syscall 入口——用户态进入内核的唯一闸门。',
+    code: `/* arch/x86/entry/entry_64.S */
+SYM_CODE_START(entry_SYSCALL_64)
+	...
+	swapgs
+	...
+	movq	%rsp, PER_CPU_VAR(cpu_tss_rw + TSS_sp2)
+	...
+	call	do_syscall_64		/* returns with IRQs disabled */
+	...
+SYM_CODE_END(entry_SYSCALL_64)`
+  },
+  related: ['k-libc', 'sc-overview', 'sc-read', 'proc-model'],
+  idea: `<p>系统调用是用户态与内核态之间的"安检门"：程序想要特权服务，必须从这里递交申请。</p>`,
+  drill: { view: 'user', focus: null, label: '用户态' }
+};
+
+N['m-net'] = {
+  id: 'm-net', type: 'hw', name: '网卡', en: 'Network Interface',
+  kind: '部件',
+  zh: '网络协议栈的入口：从网卡中断到 socket，数据包穿过整个内核网络子系统。',
+  desc: `
+    <p>网卡收到数据包后触发<b>中断</b>，内核网络栈接手：软中断 → 协议解析 → socket 队列 → 应用程序。</p>
+    <p>点击「深入探索」进入内核态的网络子系统。</p>`,
+  source: {
+    file: 'net/core/dev.c',
+    note: '收包入口 netif_rx——数据包进入内核网络栈的第一站。',
+    code: `/* net/core/dev.c */
+int netif_rx(struct sk_buff *skb)
+{
+	trace_netif_rx_entry(skb);
+	return netif_rx_internal(skb);
+}
+EXPORT_SYMBOL(netif_rx);`
+  },
+  related: ['k-net', 'k-irq', 'k-drivers'],
+  idea: `<p>网络是内核里最"异步"的子系统：数据在中断上下文、软中断、进程上下文之间接力传递。</p>`,
+  drill: { view: 'kernel', focus: 'k-net', label: '网络子系统' }
+};

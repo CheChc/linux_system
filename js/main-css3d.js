@@ -97,8 +97,42 @@
   const groupUser = new THREE.Group();     scene.add(groupUser);
   const groupFS = new THREE.Group();       scene.add(groupFS);
   const groupMem = new THREE.Group();      scene.add(groupMem);
+  const groupMachine = new THREE.Group();   scene.add(groupMachine);
 
   /* ---------------- 构建：硬件层 ---------------- */
+  /* ---------------- 整机层：一台计算机 ---------------- */
+  function buildMachine() {
+    // 机箱底板
+    const deck = makeDeck(760, 460, 'deck-hard', 'MACHINE · 点击部件逐层深入');
+    place(deck, 0, 0.15, 0, -Math.PI / 2);
+    groupMachine.add(deck);
+
+    // 六部件卡片（按机箱布局摆放）
+    const psu = makeCard('m-psu', 130, 60, { name: 'PSU · 启动', sub: '上电 → 引导 → start_kernel', cls: 'c3d-metal' });
+    place(psu, -4.3, 1.1, -2.6);
+    groupMachine.add(psu);
+
+    const cpu = makeCard('m-cpu', 150, 70, { name: 'CPU · 内核', sub: '特权级 · 调度 · MMU', cls: 'c3d-kernel' });
+    place(cpu, -3.4, 1.15, 1.2);
+    groupMachine.add(cpu);
+
+    const ram = makeCard('m-ram', 150, 70, { name: 'RAM · 内存', sub: '虚拟内存 · 页表 · 缺页', cls: 'c3d-term' });
+    place(ram, -0.4, 1.15, 1.5);
+    groupMachine.add(ram);
+
+    const disk = makeCard('m-disk', 150, 70, { name: 'DISK · 存储', sub: '目录树 · VFS · ext4', cls: 'c3d-metal' });
+    place(disk, 2.8, 1.15, 1.2);
+    groupMachine.add(disk);
+
+    const nic = makeCard('m-net', 130, 55, { name: 'NET · 网络', sub: '协议栈 · 中断', cls: 'c3d-gate' });
+    place(nic, 4.5, 1.1, -2.4);
+    groupMachine.add(nic);
+
+    const screen = makeCard('m-screen', 170, 95, { name: 'SCREEN · 用户态', sub: 'libc · 系统调用 · 进程', cls: 'c3d-user' });
+    place(screen, 0, 2.6, -3.4);
+    groupMachine.add(screen);
+  }
+
   function buildHardware() {
     // 层板
     const deck = makeDeck(760, 520, 'deck-hard', 'HARDWARE · 硬件层');
@@ -265,6 +299,7 @@
 
   /* ---------------- 构建 ---------------- */
   buildHardware();
+  buildMachine();
   buildKernel();
   buildUser();
   buildFS();
@@ -279,17 +314,19 @@
     process:  { pos: [0, 6.2, 9.0],  look: [0, 5.2, 0], show: { hw: true, kernel: true, user: true, fs: false, mem: false } },
     memory:   { pos: [7.8, 5.0, 9.8], look: [7.8, 2.8, 0], show: { hw: false, kernel: false, user: false, fs: false, mem: true } },
     user:     { pos: [0, 6.2, 9.6],  look: [0, 5.3, 0], show: { hw: true, kernel: true, user: true, fs: false, mem: false } },
+    machine:  { pos: [0, 5.4, 14.5], look: [0, 2.9, 0], show: { machine: true } },
   };
 
-  const VIEW_NAMES = { panorama: '全景', kernel: '内核态', fs: '目录树', process: '进程', memory: '内存', user: '用户' };
+  const VIEW_NAMES = { machine: '整机', panorama: '全景', kernel: '内核态', fs: '目录树', process: '进程', memory: '内存', user: '用户' };
 
   function applyViewShow(v) {
     const d = VIEW_DEFS[v];
-    groupHardware.visible = d.show.hw;
-    groupKernel.visible = d.show.kernel;
-    groupUser.visible = d.show.user;
-    groupFS.visible = d.show.fs;
-    groupMem.visible = d.show.mem;
+    groupHardware.visible = !!d.show.hw;
+    groupKernel.visible = !!d.show.kernel;
+    groupUser.visible = !!d.show.user;
+    groupFS.visible = !!d.show.fs;
+    groupMem.visible = !!d.show.mem;
+    groupMachine.visible = !!d.show.machine;
   }
 
   /* ---------------- 相机动画 ---------------- */
@@ -575,8 +612,19 @@
   });
 
   /* ---------------- 接口 ---------------- */
+  /* 钻取：整机部件 → 对应子系统视图 */
+  function drill(id) {
+    const n = window.KDATA.nodes[id];
+    if (!n || !n.drill) return;
+    window.__K3D_CRUMB = '整机 › ' + n.name;
+    setView(n.drill.view);
+    if (n.drill.focus) {
+      setTimeout(function () { focusNode(n.drill.focus); }, 1000);
+    }
+  }
+
   const K3D = {
-    setView, focusNode, selectNode, clearSelection,
+    setView, focusNode, selectNode, clearSelection, drill,
     nameOf: (id) => (window.KDATA.nodes[id] ? window.KDATA.nodes[id].name : '—'),
     onSceneContextMenu: null,
     _dbg: { scene, camera, renderer, controls, mode: 'css3d' },
@@ -585,7 +633,7 @@
 
   /* URL hash 深链：#view=内核态 / #view=memory 直达指定视图。
      必须在 setView 之前读取——setView 内部会 replaceState 改写 hash */
-  var initView = 'panorama';
+  var initView = 'machine';
   (function () {
     var m = location.hash.match(/view=([a-z]+)/);
     if (m && VIEW_DEFS[m[1]]) initView = m[1];

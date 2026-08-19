@@ -215,7 +215,9 @@
 
 				for ( let i = 0, l = object.children.length; i < l; i ++ ) {
 
-					renderObject( object.children[ i ], scene, camera, cameraCSSMatrix );
+					const child = object.children[ i ];
+					if ( ! child.visible ) continue;   // 隐藏组不递归渲染（含 undefined）
+					renderObject( child, scene, camera, cameraCSSMatrix );
 
 				}
 

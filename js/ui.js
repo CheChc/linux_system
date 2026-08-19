@@ -37,13 +37,19 @@ const UI = (() => {
     const n = window.KDATA.nodes[nodeId];
     if (!n) return;
 
-    panelCrumb.textContent = n.kind + '  /  ' + n.id;
+    const crumb = window.__K3D_CRUMB || '';
+    panelCrumb.textContent = (crumb ? crumb + '  /  ' : '') + n.kind + '  /  ' + n.id;
     let html = '<div class="p-body">';
     html += '<span class="p-kind">' + esc(n.kind) + '</span>';
     html += '<h2>' + esc(n.name) + '</h2>';
     html += '<div class="p-sub">' + esc(n.en) + '</div>';
     html += '<div class="p-zh">' + esc(n.zh) + '</div>';
     html += n.desc;
+
+    // 深入探索按钮（整机部件 → 子系统）
+    if (n.drill) {
+      html += '<button class="drill-btn" data-act="drill" data-id="' + esc(n.id) + '">深入探索 → ' + esc(n.drill.label || '子系统') + '</button>';
+    }
 
     // 源码预览
     if (n.source) {
@@ -81,6 +87,12 @@ const UI = (() => {
     openPanel();
 
     // 面板内按钮绑定
+    panelBody.querySelectorAll('[data-act="drill"]').forEach(b => {
+      b.addEventListener('click', () => {
+        const id = b.getAttribute('data-id');
+        if (window.K3D && window.K3D.drill) window.K3D.drill(id);
+      });
+    });
     panelBody.querySelectorAll('[data-act="fullsrc"]').forEach(b => {
       b.addEventListener('click', () => openSource(n));
     });
@@ -258,6 +270,7 @@ const UI = (() => {
     document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const v = btn.getAttribute('data-view');
+    window.__K3D_CRUMB = btn.textContent === '整机' ? '' : '整机 › ' + btn.textContent;
     window.K3D && window.K3D.setView(v);
     closePanel();
   });

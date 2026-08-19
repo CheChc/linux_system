@@ -651,3 +651,14 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 @media (prefers-reduced-motion: reduce) {
   .panel, .onboard, .css-label, .view-btn, .icon-btn { transition: none !important; }
 }
+
+/* ===== 整机层（machine）新增样式 ===== */
+.machine-tag { color: #b9c8d4; font-size: 12px; letter-spacing: 1px; }
+.drill-btn {
+  display: block; width: 100%; margin: 14px 0 4px; padding: 10px 14px;
+  background: linear-gradient(135deg, #d9a05b, #b07d3e);
+  color: #141a17; border: none; border-radius: 6px;
+  font-size: 14px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+  transition: filter .15s, transform .1s;
+}
+.drill-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
