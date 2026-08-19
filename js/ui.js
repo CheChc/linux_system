@@ -248,6 +248,8 @@ const UI = (() => {
   });
   // 15 秒未操作则自动收起
   setTimeout(hideOnboard, 15000);
+  // 深链直达：URL 带 #view= 参数时立即跳过引导（分享链接直接看场景）
+  if (/view=[a-z]+/.test(location.hash)) hideOnboard();
 
   // 视图 tabs
   document.getElementById('views').addEventListener('click', (e) => {

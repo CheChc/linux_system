@@ -635,6 +635,7 @@
     flyTo(d.pos, d.look);
     document.querySelectorAll('.view-btn').forEach(b =>
       b.classList.toggle('active', b.getAttribute('data-view') === v));
+    try { history.replaceState(null, '', '#view=' + v); } catch (e) {}
   }
 
   function focusNode(nodeId) {
@@ -968,8 +969,14 @@
     return true;
   };
 
-  // 初始视角
-  setView('panorama');
+  /* URL hash 深链：#view=内核态 / #view=memory 直达指定视图（可分享/收藏）。
+     必须在 setView 之前读取——setView 内部会 replaceState 改写 hash */
+  var initView = 'panorama';
+  (function () {
+    var m = location.hash.match(/view=([a-z]+)/);
+    if (m && VIEW_DEFS[m[1]]) initView = m[1];
+  })();
+  setView(initView);
 
   /* 渲染黑屏检测：渲染数帧后若画布几乎无内容，
      说明驱动/软渲染异常（renderer 创建成功≠画面正常），回退 CSS3D */
