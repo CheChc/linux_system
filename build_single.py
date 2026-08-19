@@ -20,26 +20,28 @@ data3 = read('js/data3.js')
 ui    = read('js/ui.js')
 main  = read('js/main-css3d.js')
 
-# 1) CSS 内联
-html = html.replace('<link rel="stylesheet" href="css/style.css?v=2">',
-                    '<style>\n' + css + '\n</style>')
+# 1) CSS 内联（版本无关）
+html = re.sub(r'<link rel="stylesheet" href="css/style\.css\?v=\d+">',
+              '<style>\n' + css + '\n</style>', html)
 
-# 2) 外链脚本内联（CSS2DRenderer 不需要——CSS3D 版不用）
-def inline(html, src_attr, content):
-    # src_attr 形如 'js/three.min.js?v=2'
-    pat = re.compile(r'<script src="' + re.escape(src_attr) + r'"></script>')
+# 2) 外链脚本内联（版本无关；CSS2DRenderer 不需要——CSS3D 版不用）
+def inline(html, src, content):
+    pat = re.compile(r'<script src="' + re.escape(src) + r'(\?v=\d+)?"></script>')
     return pat.sub(lambda m: '<script>\n' + content + '\n</script>', html)
 
-html = inline(html, 'js/three.min.js?v=2', three)
-html = inline(html, 'js/OrbitControls.js?v=2', orbit)
-html = inline(html, 'js/CSS3DRenderer.js?v=2', css3d)
-html = inline(html, 'js/data.js?v=2', data)
-html = inline(html, 'js/data2.js?v=2', data2)
-html = inline(html, 'js/data3.js?v=2', data3)
-html = inline(html, 'js/ui.js?v=2', ui)
+for src, content in [
+    ('js/three.min.js', three),
+    ('js/OrbitControls.js', orbit),
+    ('js/CSS3DRenderer.js', css3d),
+    ('js/data.js', data),
+    ('js/data2.js', data2),
+    ('js/data3.js', data3),
+    ('js/ui.js', ui),
+]:
+    html = inline(html, src, content)
 
 # 3) 移除不需要的 CSS2DRenderer 外链（CSS3D 版不使用）
-html = re.sub(r'<script src="js/CSS2DRenderer\.js\?v=2"></script>\n?', '', html)
+html = re.sub(r'<script src="js/CSS2DRenderer\.js(\?v=\d+)?"></script>\n?', '', html)
 
 # 4) 动态选择脚本替换为直接执行 CSS3D 版
 pat_choice = re.compile(r'<script>\n/\* 渲染模式自动选择.*?</script>', re.S)

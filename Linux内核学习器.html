@@ -671,6 +671,13 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .drill-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
 
+/* ===== 导航分组 ===== */
+.nav-group {
+  color: var(--ink-faint, #7a857e); font-size: 10px; letter-spacing: 2px;
+  margin: 0 4px 0 10px; user-select: none; opacity: .8;
+}
+.nav-group::after { content: ''; }
+
 </style>
 </head>
 <body>
@@ -686,13 +693,16 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   </div>
 
   <nav class="views" id="views" role="tablist">
+    <span class="nav-group">硬件</span>
     <button class="view-btn active" data-view="machine" role="tab">整机</button>
-    <button class="view-btn" data-view="panorama" role="tab">全景</button>
+    <span class="nav-group">软件</span>
     <button class="view-btn" data-view="kernel" role="tab">内核态</button>
     <button class="view-btn" data-view="fs" role="tab">目录树</button>
     <button class="view-btn" data-view="process" role="tab">进程</button>
     <button class="view-btn" data-view="memory" role="tab">内存</button>
     <button class="view-btn" data-view="user" role="tab">用户</button>
+    <span class="nav-group">全局</span>
+    <button class="view-btn" data-view="panorama" role="tab">全景</button>
   </nav>
 
   <div class="hud-right">

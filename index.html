@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KERNEL://EXPLORER — Linux 内核三维学习器</title>
 <meta name="description" content="以三维交互方式学习 Linux 系统架构：内核态/用户态、目录树、进程与内存原理">
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -20,13 +20,16 @@
   </div>
 
   <nav class="views" id="views" role="tablist">
+    <span class="nav-group">硬件</span>
     <button class="view-btn active" data-view="machine" role="tab">整机</button>
-    <button class="view-btn" data-view="panorama" role="tab">全景</button>
+    <span class="nav-group">软件</span>
     <button class="view-btn" data-view="kernel" role="tab">内核态</button>
     <button class="view-btn" data-view="fs" role="tab">目录树</button>
     <button class="view-btn" data-view="process" role="tab">进程</button>
     <button class="view-btn" data-view="memory" role="tab">内存</button>
     <button class="view-btn" data-view="user" role="tab">用户</button>
+    <span class="nav-group">全局</span>
+    <button class="view-btn" data-view="panorama" role="tab">全景</button>
   </nav>
 
   <div class="hud-right">
@@ -118,14 +121,14 @@
   </div>
 </div>
 
-<script src="js/three.min.js?v=2"></script>
-<script src="js/OrbitControls.js?v=2"></script>
-<script src="js/CSS2DRenderer.js?v=2"></script>
-<script src="js/CSS3DRenderer.js?v=2"></script>
-<script src="js/data.js?v=2"></script>
-<script src="js/data2.js?v=2"></script>
-<script src="js/data3.js?v=2"></script>
-<script src="js/ui.js?v=2"></script>
+<script src="js/three.min.js?v=3"></script>
+<script src="js/OrbitControls.js?v=3"></script>
+<script src="js/CSS2DRenderer.js?v=3"></script>
+<script src="js/CSS3DRenderer.js?v=3"></script>
+<script src="js/data.js?v=3"></script>
+<script src="js/data2.js?v=3"></script>
+<script src="js/data3.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
 <script>
 /* 渲染模式自动选择：有 WebGL → 3D 光影版；无 WebGL → CSS3D 卡片版（无需 GPU） */
 (function () {
@@ -137,7 +140,7 @@
       (a.getContext('webgl2') || b.getContext('webgl') || b.getContext('experimental-webgl')));
   } catch (e) { ok = false; }
   var s = document.createElement('script');
-  s.src = ok ? 'js/main.js?v=2' : 'js/main-css3d.js?v=2';
+  s.src = ok ? 'js/main.js?v=3' : 'js/main-css3d.js?v=3';
   document.body.appendChild(s);
 })();
 </script>

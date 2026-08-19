@@ -662,3 +662,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   transition: filter .15s, transform .1s;
 }
 .drill-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+/* ===== 导航分组 ===== */
+.nav-group {
+  color: var(--ink-faint, #7a857e); font-size: 10px; letter-spacing: 2px;
+  margin: 0 4px 0 10px; user-select: none; opacity: .8;
+}
+.nav-group::after { content: ''; }
