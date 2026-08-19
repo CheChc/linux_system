@@ -669,3 +669,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin: 0 4px 0 10px; user-select: none; opacity: .8;
 }
 .nav-group::after { content: ''; }
+
+/* ===== 主板丝印标签 ===== */
+.pcb-tag { color: #a8c8b4; font-size: 11px; letter-spacing: 1.5px; opacity: .85; }
+.deck-mobo { background: linear-gradient(180deg, #1c5c3d, #13422c) !important; }

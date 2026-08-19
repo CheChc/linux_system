@@ -121,6 +121,8 @@
     metal:     new THREE.MeshStandardMaterial({ color: 0x8f9491, metalness: 0.75, roughness: 0.35 }),
     metalDark: new THREE.MeshStandardMaterial({ color: 0x555a58, metalness: 0.7, roughness: 0.45 }),
     term:      new THREE.MeshStandardMaterial({ color: 0x9cc39a, metalness: 0.1, roughness: 0.5 }),
+    pcb:       new THREE.MeshStandardMaterial({ color: 0x1c5c3d, metalness: 0.25, roughness: 0.6 }),
+    pcbDark:   new THREE.MeshStandardMaterial({ color: 0x13422c, metalness: 0.25, roughness: 0.65 }),
     glass:     new THREE.MeshStandardMaterial({ color: 0xd9a05b, metalness: 0.1, roughness: 0.2, transparent: true, opacity: 0.10, side: THREE.DoubleSide, depthWrite: false }),
     glassCold: new THREE.MeshStandardMaterial({ color: 0x8aa8bd, metalness: 0.1, roughness: 0.2, transparent: true, opacity: 0.10, side: THREE.DoubleSide, depthWrite: false }),
   };
@@ -271,75 +273,90 @@
      整机层（新增）：一台计算机。点击部件 → 钻取对应子系统
      ================================================================ */
   function buildMachine() {
-    // 机箱（半透明外壳）
-    const caseBox = makeBox(11.4, 7.2, 8.8, MAT.glass);
-    caseBox.position.set(0, 3.6, 0);
-    groupMachine.add(caseBox);
-    groupMachine.add(makeEdges(caseBox, 0x3a423e));
+    // ============ 主板 PCB（整块绿色板） ============
+    const pcb = makeBox(12.2, 0.18, 8.2, MAT.pcb);
+    pcb.position.set(0, 0.1, 0);
+    groupMachine.add(pcb);
+    groupMachine.add(makeEdges(pcb, 0x0e3320));
+    // 板面细节：几条"走线"装饰条
+    const trace1 = makeBox(8.5, 0.03, 0.05, MAT.pcbDark);
+    trace1.position.set(-1.5, 0.21, 2.2);
+    groupMachine.add(trace1);
+    const trace2 = makeBox(0.05, 0.03, 5.5, MAT.pcbDark);
+    trace2.position.set(2.8, 0.21, -0.8);
+    groupMachine.add(trace2);
 
-    // 主板（底部基板）
-    const mobo = makeBox(10.2, 0.16, 7.0, MAT.metalDark);
-    mobo.position.set(0, 0.72, 0);
-    groupMachine.add(mobo);
-    groupMachine.add(makeEdges(mobo, 0x2f3833));
-
-    // CPU 插座 + 散热器
-    const cpuSock = makeBox(1.9, 0.28, 1.9, MAT.metal, 'm-cpu');
-    cpuSock.position.set(-3.5, 0.95, 1.1);
-    groupMachine.add(cpuSock);
-    const hs = makeBox(1.5, 0.75, 1.5, MAT.amberDark, 'm-cpu');
-    hs.position.set(-3.5, 1.55, 1.1);
-    groupMachine.add(hs);
-    const lCpu = makeLabel('CPU · 内核', 'machine-tag', 'm-cpu');
-    lCpu.position.set(-3.5, 2.55, 1.1);
+    // ============ CPU 插座 + 散热器（左中） ============
+    const sock = makeBox(2.0, 0.22, 2.0, MAT.metalDark, 'm-cpu');
+    sock.position.set(-3.6, 0.32, 1.1);
+    groupMachine.add(sock);
+    // 散热器：鳍片
+    for (let i = 0; i < 5; i++) {
+      const fin = makeBox(1.6, 0.1, 0.22, MAT.amberDark, 'm-cpu');
+      fin.position.set(-3.6, 0.62 + i * 0.16, 1.1 + (i - 2) * 0.28);
+      groupMachine.add(fin);
+    }
+    // 散热器顶盖
+    const hsTop = makeBox(1.5, 0.06, 1.5, MAT.metal, 'm-cpu');
+    hsTop.position.set(-3.6, 1.5, 1.1);
+    groupMachine.add(hsTop);
+    const lCpu = makeLabel('CPU', 'pcb-tag', 'm-cpu');
+    lCpu.position.set(-3.6, 1.9, 1.1);
     groupMachine.add(lCpu);
 
-    // 内存条 ×2
-    for (let i = 0; i < 2; i++) {
-      const stick = makeBox(0.5, 0.14, 3.6, MAT.term, 'm-ram');
-      stick.position.set(0.3 + i * 0.8, 0.98, 1.5);
-      groupMachine.add(stick);
+    // ============ 内存插槽 ×4（中排） ============
+    for (let i = 0; i < 4; i++) {
+      const slot = makeBox(0.55, 0.1, 3.6, MAT.term, 'm-ram');
+      slot.position.set(-0.3 + i * 0.85, 0.36, 1.6);
+      groupMachine.add(slot);
+      // 插槽卡扣
+      const clip = makeBox(0.6, 0.18, 0.25, MAT.metalDark, 'm-ram');
+      clip.position.set(-0.3 + i * 0.85, 0.5, 3.35);
+      groupMachine.add(clip);
     }
-    const lRam = makeLabel('RAM · 内存', 'machine-tag', 'm-ram');
-    lRam.position.set(0.7, 1.55, 3.6);
+    const lRam = makeLabel('RAM ×4', 'pcb-tag', 'm-ram');
+    lRam.position.set(0.95, 0.9, 3.7);
     groupMachine.add(lRam);
 
-    // 硬盘（SSD 盘位）
-    const disk = makeBox(2.9, 0.2, 2.0, MAT.metal, 'm-disk');
-    disk.position.set(3.5, 0.98, 1.2);
-    groupMachine.add(disk);
-    const lDisk = makeLabel('DISK · 存储', 'machine-tag', 'm-disk');
-    lDisk.position.set(3.5, 1.55, 1.2);
+    // ============ 硬盘位（右中） ============
+    const ssd = makeBox(3.0, 0.16, 2.2, MAT.metalDark, 'm-disk');
+    ssd.position.set(3.6, 0.34, 1.2);
+    groupMachine.add(ssd);
+    const lDisk = makeLabel('SSD', 'pcb-tag', 'm-disk');
+    lDisk.position.set(3.6, 0.85, 1.2);
     groupMachine.add(lDisk);
 
-    // 电源（角落）
-    const psu = makeBox(1.9, 1.3, 3.4, MAT.metalDark, 'm-psu');
-    psu.position.set(4.3, 1.7, -2.4);
+    // ============ 电源（右后角） ============
+    const psu = makeBox(2.0, 1.1, 3.2, MAT.metalDark, 'm-psu');
+    psu.position.set(4.4, 0.85, -2.4);
     groupMachine.add(psu);
-    const lPsu = makeLabel('PSU · 启动', 'machine-tag', 'm-psu');
-    lPsu.position.set(4.3, 2.75, -2.4);
+    const lPsu = makeLabel('PSU', 'pcb-tag', 'm-psu');
+    lPsu.position.set(4.4, 1.7, -2.4);
     groupMachine.add(lPsu);
 
-    // 网卡
-    const nic = makeBox(1.1, 0.16, 0.9, MAT.coldDeep, 'm-net');
-    nic.position.set(-4.6, 1.0, -2.6);
+    // ============ 网卡（左下） ============
+    const nic = makeBox(1.4, 0.14, 1.0, MAT.coldDeep, 'm-net');
+    nic.position.set(-5.2, 0.33, -1.6);
     groupMachine.add(nic);
-    const lNet = makeLabel('NET · 网络', 'machine-tag', 'm-net');
-    lNet.position.set(-4.6, 1.6, -2.6);
+    const lNet = makeLabel('NET', 'pcb-tag', 'm-net');
+    lNet.position.set(-5.2, 0.8, -1.6);
     groupMachine.add(lNet);
 
-    // 屏幕（立在后侧）
-    const screen = makeBox(5.2, 3.1, 0.1, MAT.cold, 'm-screen');
-    screen.position.set(0, 3.9, -4.0);
+    // ============ 屏幕（后侧立起） ============
+    const scrStand = makeBox(0.5, 1.6, 0.5, MAT.metalDark);
+    scrStand.position.set(0, 1.0, -4.2);
+    groupMachine.add(scrStand);
+    const screen = makeBox(5.6, 3.2, 0.12, MAT.cold, 'm-screen');
+    screen.position.set(0, 3.2, -4.0);
     groupMachine.add(screen);
-    const lScreen = makeLabel('SCREEN · 用户态', 'machine-tag', 'm-screen');
-    lScreen.position.set(0, 5.6, -4.0);
+    const lScreen = makeLabel('SCREEN', 'pcb-tag', 'm-screen');
+    lScreen.position.set(0, 5.0, -4.0);
     groupMachine.add(lScreen);
 
-    // 整机标签
-    const lMachine = makeLabel('MACHINE · 点击部件逐层深入', 'layer-tag cold');
-    lMachine.position.set(0, 0.35, 5.2);
-    groupMachine.add(lMachine);
+    // 主板标题（丝印风格）
+    const lBoard = makeLabel('MOTHERBOARD · 点击部件逐层深入', 'layer-tag cold');
+    lBoard.position.set(0, 0.55, 5.4);
+    groupMachine.add(lBoard);
   }
 
   /* ================================================================
@@ -677,7 +694,7 @@
     process:  { pos: [0, 6.2, 9.0],  look: [0, 5.2, 0], show: { hw: true, kernel: true, user: true, fs: false, mem: false } },
     memory:   { pos: [7.8, 5.0, 9.8], look: [7.8, 2.8, 0], show: { hw: false, kernel: false, user: false, fs: false, mem: true } },
     user:     { pos: [0, 6.2, 9.6],  look: [0, 5.3, 0], show: { hw: true, kernel: true, user: true, fs: false, mem: false } },
-    machine:  { pos: [0, 5.4, 14.5], look: [0, 2.9, 0], show: { machine: true } },
+    machine:  { pos: [0, 4.8, 11.5], look: [0, 1.6, 0], show: { machine: true } },
   };
 
   const VIEW_NAMES = { machine: '整机', panorama: '全景', kernel: '内核态', fs: '目录树', process: '进程', memory: '内存', user: '用户' };

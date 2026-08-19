@@ -678,6 +678,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .nav-group::after { content: ''; }
 
+/* ===== 主板丝印标签 ===== */
+.pcb-tag { color: #a8c8b4; font-size: 11px; letter-spacing: 1.5px; opacity: .85; }
+.deck-mobo { background: linear-gradient(180deg, #1c5c3d, #13422c) !important; }
+
 </style>
 </head>
 <body>
@@ -4801,36 +4805,46 @@ const UI = (() => {
   const groupMachine = new THREE.Group();   scene.add(groupMachine);
 
   /* ---------------- 构建：硬件层 ---------------- */
-  /* ---------------- 整机层：一台计算机 ---------------- */
+  /* ---------------- 整机层：主板全景 ---------------- */
   function buildMachine() {
-    // 机箱底板
-    const deck = makeDeck(760, 460, 'deck-hard', 'MACHINE · 点击部件逐层深入');
+    // 主板（绿色 PCB 底板）
+    const deck = makeDeck(820, 520, 'deck-mobo', 'MOTHERBOARD · 点击部件逐层深入');
     place(deck, 0, 0.15, 0, -Math.PI / 2);
     groupMachine.add(deck);
 
-    // 六部件卡片（按机箱布局摆放）
-    const psu = makeCard('m-psu', 130, 60, { name: 'PSU · 启动', sub: '上电 → 引导 → start_kernel', cls: 'c3d-metal' });
-    place(psu, -4.3, 1.1, -2.6);
-    groupMachine.add(psu);
-
-    const cpu = makeCard('m-cpu', 150, 70, { name: 'CPU · 内核', sub: '特权级 · 调度 · MMU', cls: 'c3d-kernel' });
-    place(cpu, -3.4, 1.15, 1.2);
+    // CPU（左中，散热器样式）
+    const cpu = makeCard('m-cpu', 150, 70, { name: 'CPU', sub: '内核 · 调度 · MMU', cls: 'c3d-kernel' });
+    place(cpu, -3.6, 0.8, 1.1);
     groupMachine.add(cpu);
 
-    const ram = makeCard('m-ram', 150, 70, { name: 'RAM · 内存', sub: '虚拟内存 · 页表 · 缺页', cls: 'c3d-term' });
-    place(ram, -0.4, 1.15, 1.5);
-    groupMachine.add(ram);
+    // 内存条 ×4（中排横列）
+    for (let i = 0; i < 4; i++) {
+      const ram = makeCard('m-ram', 44, 130, { name: '', sub: '', cls: 'c3d-term' });
+      place(ram, -0.3 + i * 0.95, 0.8, 1.9, 0, 0, Math.PI / 2);
+      groupMachine.add(ram);
+    }
+    const lRam = makeCard('m-ram', 120, 30, { name: 'RAM ×4', sub: '虚拟内存 · 页表 · 缺页', cls: 'c3d-sub' });
+    place(lRam, 0.95, 0.35, 3.6);
+    groupMachine.add(lRam);
 
-    const disk = makeCard('m-disk', 150, 70, { name: 'DISK · 存储', sub: '目录树 · VFS · ext4', cls: 'c3d-metal' });
-    place(disk, 2.8, 1.15, 1.2);
+    // 硬盘（右中）
+    const disk = makeCard('m-disk', 160, 60, { name: 'SSD', sub: '目录树 · VFS · ext4', cls: 'c3d-metal' });
+    place(disk, 3.6, 0.8, 1.2);
     groupMachine.add(disk);
 
-    const nic = makeCard('m-net', 130, 55, { name: 'NET · 网络', sub: '协议栈 · 中断', cls: 'c3d-gate' });
-    place(nic, 4.5, 1.1, -2.4);
+    // 电源（右后）
+    const psu = makeCard('m-psu', 120, 60, { name: 'PSU', sub: '上电 → 引导 → start_kernel', cls: 'c3d-metal' });
+    place(psu, 4.6, 0.8, -2.4);
+    groupMachine.add(psu);
+
+    // 网卡（左下）
+    const nic = makeCard('m-net', 110, 45, { name: 'NET', sub: '协议栈 · 中断', cls: 'c3d-gate' });
+    place(nic, -5.0, 0.75, -1.8);
     groupMachine.add(nic);
 
-    const screen = makeCard('m-screen', 170, 95, { name: 'SCREEN · 用户态', sub: 'libc · 系统调用 · 进程', cls: 'c3d-user' });
-    place(screen, 0, 2.6, -3.4);
+    // 屏幕（后侧立起）
+    const screen = makeCard('m-screen', 180, 100, { name: 'SCREEN', sub: 'libc · 系统调用 · 进程', cls: 'c3d-user' });
+    place(screen, 0, 2.3, -3.6);
     groupMachine.add(screen);
   }
 
@@ -5015,7 +5029,7 @@ const UI = (() => {
     process:  { pos: [0, 6.2, 9.0],  look: [0, 5.2, 0], show: { hw: true, kernel: true, user: true, fs: false, mem: false } },
     memory:   { pos: [7.8, 5.0, 9.8], look: [7.8, 2.8, 0], show: { hw: false, kernel: false, user: false, fs: false, mem: true } },
     user:     { pos: [0, 6.2, 9.6],  look: [0, 5.3, 0], show: { hw: true, kernel: true, user: true, fs: false, mem: false } },
-    machine:  { pos: [0, 5.4, 14.5], look: [0, 2.9, 0], show: { machine: true } },
+    machine:  { pos: [0, 4.8, 11.5], look: [0, 1.6, 0], show: { machine: true } },
   };
 
   const VIEW_NAMES = { machine: '整机', panorama: '全景', kernel: '内核态', fs: '目录树', process: '进程', memory: '内存', user: '用户' };
